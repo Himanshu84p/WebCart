@@ -17,14 +17,17 @@ const returnApiResponse = (res, statusCode, data, message) => {
 
 //function to calculate price of cart
 const calculateTotalPrice = async (cart) => {
-    let total = 0;
-    for (const item of cart.items) {
-        const product = await Product.findById(item.productId);
-        console.log("product ", product)
-        total += product.price * item.quantity;
-    }
-    cart.totalPrice = total;
-    await cart.save();
+  let total = 0;
+  for (const item of cart.items) {
+    const product = await Product.findById(item.productId);
+    console.log("product ", product);
+    total += product.price * item.quantity;
+  }
+  cart.totalPrice = total;
+  await cart.save();
+  await cart.populate("items.productId");
+
+  return cart;
 };
 //******************************************************************api functions here
 
@@ -32,7 +35,7 @@ const calculateTotalPrice = async (cart) => {
 const addItemToCart = asyncHandler(async (req, res) => {
   const { productId, quantity } = req.body;
 
-  if (!productId || !quantity ) {
+  if (!productId || !quantity) {
     return returnApiError(res, 400, "Product ID and quantity are required");
   }
 
@@ -45,35 +48,38 @@ const addItemToCart = asyncHandler(async (req, res) => {
   let cart = await Cart.findOne({ user: req.user._id });
 
   if (!cart) {
-    cart = new Cart({ user: req.user._id, items: []});
+    cart = new Cart({ user: req.user._id, items: [] });
   }
 
   const existingItemIndex = cart.items.findIndex(
     (item) => item.productId.toString() === productId
   );
 
-  console.log("idx",existingItemIndex)
+  console.log("idx", existingItemIndex);
 
   if (existingItemIndex !== -1) {
-    cart.items[existingItemIndex].quantity += quantity;
+    cart.items[existingItemIndex].quantity =
+      cart.items[existingItemIndex].quantity + quantity;
   } else {
-    cart.items.push({ productId :productId, name : product.name, price : product.price, quantity});
+    cart.items.push({
+      productId: productId,
+      name: product.name,
+      price: product.price,
+      quantity,
+    });
   }
 
-  console.log(cart)
+  console.log(cart);
   await calculateTotalPrice(cart);
 
-  return returnApiResponse(
-    res,
-    200,
-    cart,
-    "Item added to cart successfully"
-  );
+  return returnApiResponse(res, 200, cart, "Item added to cart successfully");
 });
 
 // Update item quantity in cart
 const updateCartItem = asyncHandler(async (req, res) => {
   const { productId, quantity } = req.body;
+
+  console.log("productId", productId, req.user._id);
 
   if (!productId || !quantity) {
     return returnApiError(res, 400, "Product ID and quantity are required");
@@ -97,17 +103,13 @@ const updateCartItem = asyncHandler(async (req, res) => {
 
   await calculateTotalPrice(cart);
 
-  return returnApiResponse(
-    res,
-    200,
-    cart,
-    "Cart item updated successfully"
-  );
+  return returnApiResponse(res, 200, cart, "Cart item updated successfully");
 });
 
 // Remove item from cart
 const removeItemFromCart = asyncHandler(async (req, res) => {
   const { productId } = req.body;
+  console.log("productId", productId);
 
   if (!productId) {
     return returnApiError(res, 400, "Product ID is required");
@@ -135,23 +137,25 @@ const removeItemFromCart = asyncHandler(async (req, res) => {
 
 // Get cart details
 const getCart = asyncHandler(async (req, res) => {
-  const cart = await Cart.findOne({ user: req.user._id }).populate('items.productId');
+  const cart = await Cart.findOne({ user: req.user._id }).populate(
+    "items.productId"
+  );
 
   if (!cart) {
     return returnApiError(res, 404, "Cart not found");
   }
 
-  return returnApiResponse(
-    res,
-    200,
-    cart,
-    "Cart details fetched successfully"
-  );
+  return returnApiResponse(res, 200, cart, "Cart details fetched successfully");
+});
+// delete cart details
+const deleteCart = asyncHandler(async (req, res) => {
+  const cart = await Cart.findOneAndDelete({ user: req.user._id });
+
+  if (!cart) {
+    return returnApiError(res, 404, "Cart not found");
+  }
+
+  return returnApiResponse(res, 200, cart, "Cart deleted successfully");
 });
 
-export {
-  addItemToCart,
-  updateCartItem,
-  removeItemFromCart,
-  getCart,
-};
+export { addItemToCart, updateCartItem, removeItemFromCart, getCart, deleteCart };

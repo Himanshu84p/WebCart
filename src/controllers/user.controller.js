@@ -70,27 +70,20 @@ const registerUser = asyncHandler(async (req, res) => {
     profile,
   });
 
-  const createdUser = await User.findById(user._id).select(
-    "-password"
-  );
+  const createdUser = await User.findById(user._id).select("-password");
 
   if (!createdUser) {
     return returnApiError(res, 500, "User creation failed");
   }
 
-  return returnApiResponse(
-    res,
-    201,
-    createdUser,
-    "User created successfully"
-  );
+  return returnApiResponse(res, 201, createdUser, "User created successfully");
 });
 
 // login user
 const loginUser = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
 
-  if (!username || (!email && !password)) {
+  if (!username && !email || !password) {
     return returnApiError(
       res,
       400,
@@ -98,7 +91,6 @@ const loginUser = asyncHandler(async (req, res) => {
     );
   }
 
-  console.log(username);
   const user = await User.findOne({
     $or: [{ username }, { email }],
   });
@@ -115,9 +107,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
   const { token } = await generateToken(user._id);
 
-  const loggedInUser = await User.findById(user._id).select(
-    "-password -token"
-  );
+  const loggedInUser = await User.findById(user._id).select("-password -token");
 
   return returnApiResponse(
     res,

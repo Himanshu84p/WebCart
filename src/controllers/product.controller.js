@@ -5,7 +5,9 @@ import { Product } from "../models/product.model.js";
 
 // Helper function for API responses
 const returnApiResponse = (res, statusCode, data, message) => {
-  return res.status(statusCode).json(new ApiResponse(statusCode, message, data));
+  return res
+    .status(statusCode)
+    .json(new ApiResponse(statusCode, message, data));
 };
 
 // Get all products
@@ -14,6 +16,12 @@ const getAllProducts = asyncHandler(async (req, res) => {
   return returnApiResponse(res, 200, products, "Products fetched successfully");
 });
 
-export {
-  getAllProducts
-};
+// Get  individual product
+const getProduct = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  console.log(id)
+  const product = await Product.find({ _id : id});
+  return returnApiResponse(res, 200, product, "Product fetched successfully");
+});
+
+export { getAllProducts, getProduct };
