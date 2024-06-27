@@ -158,4 +158,10 @@ const deleteCart = asyncHandler(async (req, res) => {
   return returnApiResponse(res, 200, cart, "Cart deleted successfully");
 });
 
-export { addItemToCart, updateCartItem, removeItemFromCart, getCart, deleteCart };
+export {
+  addItemToCart,
+  updateCartItem,
+  removeItemFromCart,
+  getCart,
+  deleteCart,
+};
