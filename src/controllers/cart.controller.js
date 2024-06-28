@@ -158,10 +158,42 @@ const deleteCart = asyncHandler(async (req, res) => {
   return returnApiResponse(res, 200, cart, "Cart deleted successfully");
 });
 
+const decreaseStockQuantity = asyncHandler(async (req, res) => {
+  const cartId = req.body.cartId;
+
+  try {
+    // Find the cart
+    const cart = await Cart.findById(cartId).populate("items.productId");
+
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
+
+    // Iterate over each item in the cart and update product stock
+    for (const item of cart.items) {
+      const product = item.productId;
+      if (product.stock < item.quantity) {
+        return returnApiError(
+          res,
+          400,
+          `Insufficient stock for product ${product.name}`
+        );
+      }
+      product.stock -= item.quantity;
+      await product.save();
+    }
+
+    return returnApiResponse(res, 200, {}, "Order placed successfully");
+  } catch (error) {
+    return returnApiError(res, 500, "Internal server error");
+  }
+});
+
 export {
   addItemToCart,
   updateCartItem,
   removeItemFromCart,
   getCart,
   deleteCart,
+  decreaseStockQuantity,
 };

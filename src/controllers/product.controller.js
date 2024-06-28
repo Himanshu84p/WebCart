@@ -24,4 +24,9 @@ const getProduct = asyncHandler(async (req, res) => {
   return returnApiResponse(res, 200, product, "Product fetched successfully");
 });
 
+// //decrease Quantity after order successful
+// const decreaseQuantity = asyncHandler(async (req,res) => {
+//   const {}
+// })
+
 export { getAllProducts, getProduct };
